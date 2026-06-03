@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現場日報</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjAwIDIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIHJ4PSI0MCIgZmlsbD0id2hpdGUiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSI3MiIgcj0iMzgiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuMTUiIHN0cm9rZT0iIzNhN2RlMCIgc3Ryb2tlLXdpZHRoPSI1Ii8+CiAgPGNpcmNsZSBjeD0iNjgiIGN5PSIxMjgiIHI9IjM4IiBmaWxsPSJ3aGl0ZSIgZmlsbC1vcGFjaXR5PSIwLjE1IiBzdHJva2U9IiMzYTdkZTAiIHN0cm9rZS13aWR0aD0iNSIvPgogIDxjaXJjbGUgY3g9IjEzMiIgY3k9IjEyOCIgcj0iMzgiIGZpbGw9IndoaXRlIiBmaWxsLW9wYWNpdHk9IjAuMTUiIHN0cm9rZT0iIzNhN2RlMCIgc3Ryb2tlLXdpZHRoPSI1Ii8+Cjwvc3ZnPg==">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="現場日報">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; background: #f5f5f5; color: #222; font-size: 17px; }
+  .header { background: #1D9E75; color: #fff; padding: 16px 20px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ホーム画面 */
+  .big-btn { width: 100%; background: #fff; border: 1px solid #ddd; border-radius: 14px; padding: 22px 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 16px; font-size: 18px; cursor: pointer; text-align: left; }
+  .big-btn:active { background: #f0f0f0; }
+  .big-btn-icon { font-size: 36px; width: 52px; text-align: center; }
+  .big-btn-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .big-btn-sub { font-size: 14px; color: #888; }
+
+  /* フォーム */
+  .back-btn { display: flex; align-items: center; gap: 6px; font-size: 16px; color: #555; cursor: pointer; background: none; border: none; padding: 0; margin-bottom: 16px; }
+  .section-title { font-size: 20px; font-weight: 600; margin-bottom: 16px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 16px; font-weight: 600; display: block; margin-bottom: 8px; }
+  .form-hint { font-size: 13px; color: #888; margin-top: 4px; }
+  input, select, textarea { font-size: 17px; width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #222; -webkit-appearance: none; appearance: none; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+  textarea { height: 110px; resize: none; line-height: 1.6; }
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .time-label { font-size: 14px; color: #666; margin-bottom: 6px; }
+  .photo-area { border: 2px dashed #ccc; border-radius: 12px; padding: 28px 20px; text-align: center; cursor: pointer; background: #fafafa; }
+  .photo-area-icon { font-size: 40px; margin-bottom: 8px; }
+  .photo-area-text { font-size: 16px; color: #888; }
+  .photo-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .photo-preview img { width: 80px; height: 70px; object-fit: cover; border-radius: 8px; }
+  #photoInput { display: none; }
+
+  .submit-btn { width: 100%; padding: 20px; font-size: 19px; font-weight: 600; border-radius: 14px; background: #1D9E75; color: #fff; border: none; cursor: pointer; margin-top: 8px; }
+  .submit-btn:active { background: #0F6E56; }
+  .submit-btn:disabled { background: #aaa; }
+
+  /* 送信完了 */
+  .done-box { text-align: center; padding: 40px 20px; }
+  .done-icon { font-size: 72px; margin-bottom: 16px; }
+  .done-title { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  .done-sub { font-size: 16px; color: #888; margin-bottom: 32px; }
+
+  /* 日報一覧 */
+  .loading { text-align: center; padding: 40px; color: #888; font-size: 16px; }
+  .report-card { background: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 12px; border: 1px solid #eee; }
+  .report-name { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+  .report-site { font-size: 14px; color: #1D9E75; font-weight: 600; margin-bottom: 8px; }
+  .report-body { font-size: 15px; color: #444; line-height: 1.6; margin-bottom: 10px; }
+  .report-notes { font-size: 14px; color: #666; background: #f9f9f9; padding: 8px 10px; border-radius: 8px; margin-bottom: 10px; line-height: 1.5; }
+  .report-meta { font-size: 13px; color: #999; display: flex; gap: 12px; flex-wrap: wrap; }
+  .no-reports { text-align: center; padding: 40px 20px; color: #aaa; font-size: 16px; }
+
+  /* エラー */
+  .error-box { background: #fff0f0; border: 1px solid #fcc; border-radius: 10px; padding: 16px; margin-bottom: 16px; font-size: 15px; color: #c00; }
+</style>
+</head>
+<body>
+
+<!-- ▼▼▼ ここにGoogle Apps ScriptのURLを貼り付けてください ▼▼▼ -->
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycby923zLdFxhWmrzNqjrwgE-61n-JRbNDkirvWhma-HVCiGB84hHoq_ypMm9lczmzoQ1pg/exec";
+</script>
+<!-- ▲▲▲ ここまで ▲▲▲ -->
+
+<div class="header">
+  <span style="font-size:24px;">🏗️</span>
+  <h1>現場日報</h1>
+</div>
+
+<div class="container">
+
+  <!-- ホーム画面 -->
+  <div class="view active" id="view-home">
+    <div style="padding: 12px 0 20px;">
+      <button class="big-btn" onclick="showView('write')">
+        <div class="big-btn-icon">✏️</div>
+        <div>
+          <div class="big-btn-title">日報を書く</div>
+          <div class="big-btn-sub">今日の作業を報告する</div>
+        </div>
+      </button>
+      <button class="big-btn" onclick="loadReports()">
+        <div class="big-btn-icon">📋</div>
+        <div>
+          <div class="big-btn-title">日報を見る</div>
+          <div class="big-btn-sub">みんなの報告を確認する</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- 日報を書く -->
+  <div class="view" id="view-write">
+    <button class="back-btn" onclick="showView('home')">◀ 戻る</button>
+    <div class="section-title">今日の日報</div>
+
+    <div class="form-group">
+      <label class="form-label">あなたの名前</label>
+      <input type="text" id="name" placeholder="例：田中 一郎" autocomplete="name">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">作業日</label>
+      <input type="date" id="date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">現場を選んでください</label>
+      <select id="site">
+        <option value="">-- 選んでください --</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">作業時間</label>
+      <div class="time-row">
+        <div>
+          <div class="time-label">開始</div>
+          <input type="time" id="startTime" value="08:00">
+        </div>
+        <div>
+          <div class="time-label">終了</div>
+          <input type="time" id="endTime" value="17:00">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">作業した人数</label>
+      <input type="number" id="workers" value="1" min="1" max="99">
+      <div class="form-hint">自分を含めた人数を入れてください</div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">今日の作業内容</label>
+      <textarea id="workContent" placeholder="例：1Fの配筋作業を行いました。午前中で完了しました。"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">連絡事項（なければ空欄でOK）</label>
+      <textarea id="notes" placeholder="例：明日は雨の予報なので資材を養生しました。" style="height: 80px;"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">現場の写真（任意）</label>
+      <div class="photo-area" onclick="document.getElementById('photoInput').click()">
+        <div class="photo-area-icon">📷</div>
+        <div class="photo-area-text">ここをタップして写真を追加</div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" multiple onchange="previewPhotos(this)">
+      <div class="photo-preview" id="photoPreview"></div>
+    </div>
+
+    <div id="writeError"></div>
+    <button class="submit-btn" id="submitBtn" onclick="submitReport()">送信する</button>
+  </div>
+
+  <!-- 送信完了 -->
+  <div class="view" id="view-done">
+    <div class="done-box">
+      <div class="done-icon">✅</div>
+      <div class="done-title">日報を送りました！</div>
+      <div class="done-sub">お疲れさまでした</div>
+      <button class="big-btn" onclick="showView('home')" style="justify-content: center;">
+        <div class="big-btn-icon">🏠</div>
+        <div><div class="big-btn-title">トップに戻る</div></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- 日報一覧 -->
+  <div class="view" id="view-list">
+    <button class="back-btn" onclick="showView('home')">◀ 戻る</button>
+    <div class="section-title">みんなの日報</div>
+    <div id="reportList"><div class="loading">読み込み中...</div></div>
+  </div>
+
+</div>
+
+<script>
+// 画面切り替え
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// 今日の日付をセット
+window.onload = function() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('date').value = yyyy + '-' + mm + '-' + dd;
+
+  // 名前を記憶から復元
+  const savedName = localStorage.getItem('reporterName');
+  if (savedName) document.getElementById('name').value = savedName;
+
+  // 現場一覧を取得
+  loadSites();
+};
+
+// 現場一覧を読み込む
+function loadSites() {
+  if (API_URL === "ここにURLを貼り付け") return;
+  fetch(API_URL)
+    .then(r => r.json())
+    .then(data => {
+      if (data.sites) {
+        const select = document.getElementById('site');
+        data.sites.forEach(site => {
+          const opt = document.createElement('option');
+          opt.value = site;
+          opt.textContent = site;
+          select.appendChild(opt);
+        });
+      }
+    })
+    .catch(() => {});
+}
+
+// 写真プレビュー
+function previewPhotos(input) {
+  const preview = document.getElementById('photoPreview');
+  preview.innerHTML = '';
+  Array.from(input.files).forEach(file => {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    preview.appendChild(img);
+  });
+}
+
+// 日報を送信
+function submitReport() {
+  const name = document.getElementById('name').value.trim();
+  const date = document.getElementById('date').value;
+  const site = document.getElementById('site').value;
+  const workContent = document.getElementById('workContent').value.trim();
+
+  const errorDiv = document.getElementById('writeError');
+  errorDiv.innerHTML = '';
+
+  if (!name) { errorDiv.innerHTML = '<div class="error-box">名前を入力してください</div>'; return; }
+  if (!site) { errorDiv.innerHTML = '<div class="error-box">現場を選んでください</div>'; return; }
+  if (!workContent) { errorDiv.innerHTML = '<div class="error-box">作業内容を入力してください</div>'; return; }
+  if (API_URL === "ここにURLを貼り付け") {
+    errorDiv.innerHTML = '<div class="error-box">セットアップが完了していません。手順書を確認してください。</div>';
+    return;
+  }
+
+  // 名前を記憶
+  localStorage.setItem('reporterName', name);
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+
+  const payload = {
+    name: name,
+    date: date,
+    site: site,
+    startTime: document.getElementById('startTime').value,
+    endTime: document.getElementById('endTime').value,
+    workers: document.getElementById('workers').value,
+    workContent: workContent,
+    notes: document.getElementById('notes').value.trim()
+  };
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      showView('done');
+      document.getElementById('workContent').value = '';
+      document.getElementById('notes').value = '';
+      document.getElementById('photoPreview').innerHTML = '';
+    } else {
+      errorDiv.innerHTML = '<div class="error-box">送信に失敗しました。もう一度試してください。</div>';
+    }
+  })
+  .catch(() => {
+    errorDiv.innerHTML = '<div class="error-box">通信エラーが発生しました。インターネット接続を確認してください。</div>';
+  })
+  .finally(() => {
+    btn.disabled = false;
+    btn.textContent = '送信する';
+  });
+}
+
+// 日報一覧を読み込む
+function loadReports() {
+  showView('list');
+  if (API_URL === "ここにURLを貼り付け") {
+    document.getElementById('reportList').innerHTML = '<div class="error-box">セットアップが完了していません。手順書を確認してください。</div>';
+    return;
+  }
+  document.getElementById('reportList').innerHTML = '<div class="loading">読み込み中...</div>';
+
+  fetch(API_URL)
+  .then(r => r.json())
+  .then(data => {
+    if (!data.reports || data.reports.length === 0) {
+      document.getElementById('reportList').innerHTML = '<div class="no-reports">まだ日報がありません</div>';
+      return;
+    }
+    const html = data.reports.map(r => {
+      const dateStr = r.date ? new Date(r.date).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' }) : '';
+      return `
+        <div class="report-card">
+          <div class="report-name">${r.name || ''}</div>
+          <div class="report-site">${r.site || ''}</div>
+          <div class="report-body">${r.workContent || ''}</div>
+          ${r.notes ? '<div class="report-notes">📌 ' + r.notes + '</div>' : ''}
+          <div class="report-meta">
+            <span>🕐 ${r.startTime || ''}〜${r.endTime || ''}</span>
+            <span>👷 ${r.workers || ''}人</span>
+            <span>${dateStr}</span>
+          </div>
+        </div>`;
+    }).join('');
+    document.getElementById('reportList').innerHTML = html;
+  })
+  .catch(() => {
+    document.getElementById('reportList').innerHTML = '<div class="error-box">読み込みに失敗しました。インターネット接続を確認してください。</div>';
+  });
+}
+</script>
+</body>
+</html>
